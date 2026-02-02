@@ -15,6 +15,8 @@
 # Image settings
 IMAGE_NAME ?= service-controller
 VERSION ?= $(shell cat VERSION 2>/dev/null || echo "v1.0.0")
+FORMATTED_TS ?= $(date +"%y%m%d%H%M%S")
+
 NO_CACHE ?= false
 
 # build variables (moved from build/build.sh)
@@ -44,7 +46,7 @@ docker:
 	@NORM_VERSION=$$(echo "$(VERSION)" | sed 's/^v*/v/'); \
 	NO_CACHE_OPT=$$(if [ "$(NO_CACHE)" = "true" ]; then echo "--no-cache"; fi); \
 	echo "Version: $$NORM_VERSION"; \
-	docker build $$NO_CACHE_OPT -t $(IMAGE_NAME):$$NORM_VERSION -t $(IMAGE_NAME):latest -f Dockerfile .
+	docker build $$NO_CACHE_OPT --build-arg COMMIT_ID=${GIT_COMMIT} --build-arg VERSION=${VERSION} --build-arg FORMATTED_TS=${FORMATTED_TS} -t $(IMAGE_NAME):$$NORM_VERSION -t $(IMAGE_NAME):latest -f Dockerfile .
 
 docker-push:
 	@if [ -z "$(REGISTRY)" ]; then \
@@ -58,7 +60,7 @@ docker-push:
 	@NORM_VERSION=$$(echo "$(VERSION)" | sed 's/^v*/v/'); \
 	NO_CACHE_OPT=$$(if [ "$(NO_CACHE)" = "true" ]; then echo "--no-cache"; fi); \
 	echo "Build+push prod (multi-arch)"; \
-	docker buildx build --platform $(PLATFORMS) $$NO_CACHE_OPT -t $(REGISTRY)/$(IMAGE_NAME):$$NORM_VERSION -t $(REGISTRY)/$(IMAGE_NAME):latest -f Dockerfile --push .; \
+	docker buildx build --platform $(PLATFORMS) $$NO_CACHE_OPT  --build-arg COMMIT_ID=${GIT_COMMIT} --build-arg VERSION=${VERSION} --build-arg FORMATTED_TS=${FORMATTED_TS} -t $(REGISTRY)/$(IMAGE_NAME):$$NORM_VERSION -t $(REGISTRY)/$(IMAGE_NAME):latest -f Dockerfile --push .; \
 	echo "Pushed multi-arch image: $(REGISTRY)/$(IMAGE_NAME):$$NORM_VERSION"
 
 build:
